@@ -113,13 +113,16 @@ body {
   flex-direction: column;
   background-color: var(--bg-html);
   transition: background-color 0.3s;
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* ─── Header ────────────────────────────────────────────────── */
 .app-header {
   display: flex;
   align-items: center;
-  padding: 16px 20px;
+  padding: calc(16px + env(safe-area-inset-top)) 20px 16px;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-body);
   position: sticky;
