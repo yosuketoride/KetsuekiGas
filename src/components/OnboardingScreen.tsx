@@ -65,7 +65,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
                 {slides.map((_, idx) => (
                     <div key={idx} style={{
                         width: '8px', height: '8px', borderRadius: '50%',
-                        backgroundColor: idx === step ? 'var(--text-primary)' : 'var(--border-color)',
+                        backgroundColor: idx === step ? '#3b82f6' : 'var(--border-color)',
                         transition: 'background-color 0.3s'
                     }} />
                 ))}
@@ -74,8 +74,8 @@ export default function OnboardingScreen({ onComplete }: Props) {
             <button
                 onClick={handleNext}
                 style={{
-                    backgroundColor: 'var(--btn-primary)',
-                    color: 'white',
+                    backgroundColor: '#3b82f6', // force exact primary blue to ensure contrast
+                    color: '#ffffff', // exact white
                     padding: '16px 32px',
                     borderRadius: 'var(--radius-lg)',
                     fontSize: '1.1rem',
