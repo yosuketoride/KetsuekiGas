@@ -21,9 +21,9 @@ export default function TermsScreen({ onBack }: { onBack: () => void }) {
                     <p>制定日: 2026年3月1日</p>
 
                     <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '8px', color: '#ef4444' }}>⚠️ 医療免責事項 (Medical Disclaimer)</h2>
-                    <p style={{ fontWeight: 'bold' }}>本アプリケーションは学習・教育目的でのみ提供されています。</p>
-                    <p>本アプリケーションが提供する評価、解釈、鑑別リスト等は、あくまで一般的なアルゴリズムと参考値に基づくものであり、<strong>実際の患者に対する臨床的な診断や治療方針の決定（臨床判断）に使用しないでください。</strong></p>
-                    <p>常に臨床現場での総合的な判断、追加検査、専門医へのコンサルテーションを優先してください。本アプリケーションの利用によって生じたいかなる損害・不利益についても、開発者は一切の責任を負いません。</p>
+                    <p style={{ fontWeight: 'bold' }}>本アプリケーションは、医療従事者の皆様の臨床推論をサポートし、血液ガス評価の思考プロセスを効率化するための補助ツールです。</p>
+                    <p>本アプリケーションが提示する評価、解釈、および鑑別リストは、一般的なアルゴリズムや参考値に基づくものです。実際の診療現場においては、本ツールの結果のみに依存せず、医師や医療従事者の皆様ご自身の専門的な知見、患者の個別状況、追加検査の結果等を総合して最終的な臨床判断を行っていただきますようお願いいたします。</p>
+                    <p>本アプリケーションの利用により生じたいかなる損害や不利益についても、開発者は責任を負いかねますので、あらかじめご了承ください。</p>
 
                     <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '8px' }}>1. サービスの利用</h2>
                     <p>本アプリケーションは、無料でご利用いただけます。ただし、通信にかかる費用はユーザーのご負担となります。</p>
@@ -40,9 +40,9 @@ export default function TermsScreen({ onBack }: { onBack: () => void }) {
                     <p>Effective Date: March 1, 2026</p>
 
                     <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '8px', color: '#ef4444' }}>⚠️ Medical Disclaimer</h2>
-                    <p style={{ fontWeight: 'bold' }}>This application is provided strictly for educational and learning purposes only.</p>
-                    <p>The evaluations, interpretations, and differential lists provided by this application are based on general algorithms and reference values. <strong>Do NOT use this application for actual clinical diagnosis or medical decision-making.</strong></p>
-                    <p>Always prioritize comprehensive clinical judgment, additional testing, and expert consultation in real-world settings. The developer assumes no responsibility or liability for any damages or adverse outcomes resulting from the use of this application.</p>
+                    <p style={{ fontWeight: 'bold' }}>This application was developed as an auxiliary tool to support the clinical reasoning of healthcare professionals and streamline the thought process for blood gas evaluation.</p>
+                    <p>The evaluations, interpretations, and differential lists provided by this application are based on general algorithms and reference values. In actual clinical practice, please do not rely solely on the results of this tool. We kindly ask that healthcare professionals make final clinical decisions by integrating their own expert judgment, the individual circumstances of the patient, and the results of additional tests.</p>
+                    <p>Please note that the developer shall not be held liable for any damages or adverse outcomes arising from the use of this application.</p>
 
                     <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '8px' }}>1. Use of Service</h2>
                     <p>This application is free to use. However, you are responsible for any data/internet connection costs incurred.</p>
