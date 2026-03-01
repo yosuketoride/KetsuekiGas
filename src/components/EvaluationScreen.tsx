@@ -4,6 +4,8 @@ import { evaluateBloodGas } from '../engine';
 import AcidBaseGrid from './AcidBaseGrid';
 import NomogramMap from './NomogramMap';
 import DifferentialWizard from './DifferentialWizard';
+import { ReviewService } from '../lib/ReviewService';
+import { useRef, useEffect } from 'react';
 
 interface FieldConfig {
     key: keyof BloodGasInput;
@@ -98,6 +100,7 @@ interface Props {
 
 export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
     const [values, setValues] = useState<Record<string, string>>({});
+    const evaluationCountedRef = useRef(false);
 
     const handleChange = useCallback((key: string, val: string) => {
         setValues(prev => ({ ...prev, [key]: val }));
@@ -130,6 +133,14 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
 
         return evaluateBloodGas(input);
     }, [values, bloodType]);
+
+    // Handle review prompt
+    useEffect(() => {
+        if (result && !evaluationCountedRef.current) {
+            evaluationCountedRef.current = true;
+            ReviewService.handleEvaluationCompleted();
+        }
+    }, [result]);
 
     const visibleFields = FIELD_CONFIGS.filter(config => {
         if (!config.optional) return true;

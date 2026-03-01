@@ -5,8 +5,9 @@ import EvaluationScreen from './components/EvaluationScreen';
 import PrivacyScreen from './components/PrivacyScreen';
 import TermsScreen from './components/TermsScreen';
 import AdBlock from './components/AdBlock';
+import OnboardingScreen from './components/OnboardingScreen';
 
-type AppScreen = 'blood-type' | 'evaluation' | 'privacy' | 'terms';
+type AppScreen = 'onboarding' | 'blood-type' | 'evaluation' | 'privacy' | 'terms';
 
 export default function App() {
     const [screen, setScreen] = useState<AppScreen>('blood-type');
@@ -37,12 +38,16 @@ export default function App() {
 
     // Handle routing based on pathname
     useEffect(() => {
+        const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+
         const handleLocationChange = () => {
             const path = window.location.pathname;
             if (path === '/privacy') {
                 setScreen('privacy');
             } else if (path === '/terms') {
                 setScreen('terms');
+            } else if (!hasSeenOnboarding) {
+                setScreen('onboarding');
             } else {
                 setScreen('blood-type');
             }
@@ -61,6 +66,11 @@ export default function App() {
     const handleSelectBloodType = useCallback((type: BloodGasInput['bloodType']) => {
         setBloodType(type);
         setScreen('evaluation');
+    }, []);
+
+    const handleOnboardingComplete = useCallback(() => {
+        localStorage.setItem('hasSeenOnboarding', 'true');
+        navigateTo('/', 'blood-type');
     }, []);
 
     const handleReset = useCallback(() => {
@@ -111,6 +121,9 @@ export default function App() {
             </header>
 
             <main style={{ flex: 1 }}>
+                {screen === 'onboarding' && (
+                    <OnboardingScreen onComplete={handleOnboardingComplete} />
+                )}
                 {screen === 'blood-type' && (
                     <>
                         <BloodTypeScreen onSelect={handleSelectBloodType} />
