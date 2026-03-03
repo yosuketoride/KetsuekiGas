@@ -3,15 +3,28 @@ default_platform(:ios)
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
-    increment_build_number(xcodeproj: "App/App.xcodeproj")
-    build_app(workspace: "App/App.xcworkspace", scheme: "App")
+    # TestFlightの最新ビルド番号+1を自動設定
+    build_num = latest_testflight_build_number(
+      app_identifier: "com.yosukes.ketsuekigas"
+    ) + 1
+    increment_build_number(
+      build_number: build_num,
+      xcodeproj: "App.xcodeproj"
+    )
+    build_app(workspace: "App.xcworkspace", scheme: "App")
     upload_to_testflight
   end
 
   desc "Push a new release build to the App Store"
   lane :release do
-    increment_build_number(xcodeproj: "App/App.xcodeproj")
-    build_app(workspace: "App/App.xcworkspace", scheme: "App")
+    build_num = latest_testflight_build_number(
+      app_identifier: "com.yosukes.ketsuekigas"
+    ) + 1
+    increment_build_number(
+      build_number: build_num,
+      xcodeproj: "App.xcodeproj"
+    )
+    build_app(workspace: "App.xcworkspace", scheme: "App")
     upload_to_app_store(
       submit_for_review: false, # 確認のため最初は false
       force: true
