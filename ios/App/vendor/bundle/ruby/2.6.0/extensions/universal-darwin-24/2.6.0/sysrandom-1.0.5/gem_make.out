@@ -1,0 +1,12 @@
+current directory: /Users/yosuke/Desktop/Development/KetsuekiGas/ios/App/vendor/bundle/ruby/2.6.0/gems/sysrandom-1.0.5/ext/sysrandom
+/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/bin/ruby -I /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0 -r ./siteconf20260303-62427-30hnwj.rb extconf.rb
+creating Makefile
+
+current directory: /Users/yosuke/Desktop/Development/KetsuekiGas/ios/App/vendor/bundle/ruby/2.6.0/gems/sysrandom-1.0.5/ext/sysrandom
+make "DESTDIR=" clean
+
+current directory: /Users/yosuke/Desktop/Development/KetsuekiGas/ios/App/vendor/bundle/ruby/2.6.0/gems/sysrandom-1.0.5/ext/sysrandom
+make "DESTDIR="
+make: *** No rule to make target `/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/include/ruby-2.6.0/universal-darwin24/ruby/config.h', needed by `randombytes_sysrandom.o'.  Stop.
+
+make failed, exit code 2

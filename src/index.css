@@ -2,6 +2,7 @@
 
 /* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
+  color-scheme: dark;
   --bg-primary: #000000;
   --bg-secondary: #111111;
   --bg-card: #1c1c1e;
@@ -61,6 +62,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --bg-html: #f3f4f6;
   --bg-body: #ffffff;
   --bg-card: #f9fafb;

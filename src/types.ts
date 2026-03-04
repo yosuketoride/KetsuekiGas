@@ -13,7 +13,15 @@ export interface BloodGasInput {
     glu?: number;   // mg/dL (optional)
     lac?: number;   // mmol/L (optional)
     be?: number;    // mmol/L (Base Excess, optional)
-    uCl?: number;   // mEq/L (Urine Cl, optional)
+    bun?: number;   // mg/dL (optional)
+    sOsm?: number;  // mOsm/kgH2O (optional)
+    uNa?: number;   // mEq/L (optional)
+    uK?: number;    // mEq/L (optional)
+    uCl?: number;   // mEq/L (optional)
+    uOsm?: number;  // mOsm/kgH2O (optional)
+    uUn?: number;   // mg/dL (Urine Urea Nitrogen, optional)
+    uGlu?: number;  // mg/dL (Urine Glucose, optional)
+    uPH?: number;   // Urine pH (optional)
     pO2?: number;   // mmHg (optional)
     fio2?: number;  // % e.g. 21 to 100 (optional)
 }
@@ -92,6 +100,19 @@ export interface Step5Result {
     explanation: string;
 }
 
+export interface OsmolalityResult {
+    serumEvaluated: boolean;
+    calcSerumOsm?: number;
+    serumOsmGap?: number;
+    urineEvaluated: boolean;
+    calcUrineOsm?: number;
+    urineOsmGap?: number;
+    urineAgEvaluated: boolean;
+    urineAg?: number;
+    label: string;
+    explanation: string;
+}
+
 export interface BloodGasResult {
     correctedInput: BloodGasInput; // VBG-corrected values used for calc
     oxygenation: OxygenationResult;
@@ -100,5 +121,6 @@ export interface BloodGasResult {
     step3: Step3Result;
     step4: Step4Result;
     step5: Step5Result;
+    osmolality: OsmolalityResult;
     differentials: string[];
 }

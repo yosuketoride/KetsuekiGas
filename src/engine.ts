@@ -9,6 +9,7 @@ import type {
     Acidemia,
     PrimaryDisorder,
     OxygenationResult,
+    OsmolalityResult,
 } from './types';
 
 // ─── VBG Correction ────────────────────────────────────────────────────────────
@@ -456,7 +457,9 @@ function getDifferentials(
     glu?: number,
     lac?: number,
     uCl?: number,
-    hiddenHagma?: boolean
+    hiddenHagma?: boolean,
+    osmolality?: OsmolalityResult,
+    uPH?: number
 ): string[] {
     const diffs: string[] = [];
 
@@ -479,48 +482,102 @@ function getDifferentials(
     if (hasMetabolicAcidosis) {
         if (agEvaluated) {
             if (agElevated) {
-                diffs.push('🔴 AG開大性代謝性アシドーシス');
-                diffs.push('  【KUDMELS / MUDPILES に基づく鑑別】');
+                diffs.push('🔴 AG開大性代謝性アシドーシス（HAGMA）');
+                diffs.push('  ─ 以下の順に原因を確認してください ─');
 
-                let foundSpecific = false;
+                // ① 末期腎不全
+                diffs.push('  ① 末期腎不全（eGFR著明低下・透析歴）');
+                diffs.push('    → 腎性アシドーシス（硫酸・リン酸の蓄積によるAG開大）');
+
+                // ② 乳酸上昇
                 if (lac !== undefined && lac >= 2.0) {
-                    diffs.push('  📌 乳酸アシドーシス（敗血症・ショック・虚血等）※Lac高値が見られます');
-                    foundSpecific = true;
+                    diffs.push(`  ② 乳酸上昇あり（Lac ${lac.toFixed(1)} mmol/L）📌`);
+                } else {
+                    diffs.push('  ② 乳酸上昇（Lac ≥ 2 mmol/L）');
                 }
-                if (glu !== undefined && glu > 250) {
-                    diffs.push('  📌 糖尿病性ケトアシドーシス(DKA)等 ※Glu高値が見られます');
-                    foundSpecific = true;
-                }
+                diffs.push('    → 敗血症・感染性ショック（最多）');
+                diffs.push('    → 循環不全（心原性・出血性ショック）');
+                diffs.push('    → 腸管虚血（腸間膜動脈閉塞）');
+                diffs.push('    → てんかん重積発作後');
+                diffs.push('    → ビタミンB1（チアミン）欠乏');
 
-                if (!foundSpecific) {
-                    diffs.push('  ・乳酸アシドーシス (Lactic acidosis)');
-                    diffs.push('  ・ケトアシドーシス (DKA, AKA, 飢餓)');
+                // ③ ケトン体上昇
+                if (glu !== undefined && glu > 250) {
+                    diffs.push(`  ③ ケトン体上昇（Glu ${glu} mg/dL 高血糖あり）📌`);
+                } else {
+                    diffs.push('  ③ ケトン体上昇（尿/血清ケトン陽性・高血糖）');
                 }
-                diffs.push('  ・尿毒症 (Uremia) ※BUN/Crをご確認ください');
-                diffs.push('  ・その他中毒 (メタノール, エチレングリコール, サリチル酸等)');
+                diffs.push('    → 糖尿病性ケトアシドーシス（DKA）：高血糖+ケトン体');
+                diffs.push('    → アルコール性ケトアシドーシス（AKA）：血糖正常〜低値のこともある');
+                diffs.push('    → 飢餓性ケトアシドーシス：長期絶食歴');
+
+                // ④ 薬物・中毒
+                diffs.push('  ④ 薬物・中毒（飲酒歴・薬物摂取歴・浸透圧ギャップ上昇）');
+                diffs.push('    → サリチル酸中毒（呼吸性アルカローシスとの混合が特徴）');
+                diffs.push('    → アセトアミノフェン、D-乳酸アシドーシス など');
+                diffs.push('  ※①〜④で原因が不明な場合、血清浸透圧ギャップ（OG）を確認してください');
+                diffs.push('    （OG = 実測血清浸透圧 − 計算血清浸透圧 [2×Na + Glu/18 + BUN/2.8]）');
+                if (osmolality?.serumEvaluated) {
+                    if (osmolality.serumOsmGap !== undefined && osmolality.serumOsmGap > 10) {
+                        diffs.push(`    → 📌 血清OG高値 (>10): 毒性アルコール中毒（メタノール、エチレングリコール等）を強く疑う`);
+                    } else {
+                        diffs.push(`    → 血清OG基準値内: アセトアミノフェン、サリチル酸、D-乳酸などの他の原因を考慮`);
+                    }
+                } else {
+                    diffs.push('    → 血清OG高値 (>10)なら毒性アルコール中毒（メタノール、エチレングリコール等）疑い');
+                }
             } else {
-                diffs.push('🟠 AG正常型代謝性アシドーシス (NAGMA)');
-                // 隠れHAGMAが検出されていれば、NAGMAに加えHAGMAも合併していることを警告する
+                diffs.push('🟠 AG正常型代謝性アシドーシス (NAGMA / 高Cl血性)');
                 if (hiddenHagma) {
                     diffs.push('  ⚠️⚠️ 【隠れHAGMA合併の強い疑い】');
                     diffs.push('  計算AGは正常ですが乳酸値/血糖値の高値があります。');
-                    diffs.push('  高Cl血症等によりAGが偽正常化している可能性があります。');
-                    diffs.push('  → NAGMA（高Cl性）+ HAGMA（乳酸アシドーシス/ケトアシドーシス）の三管区性障害を強く疑ってください。');
-                    if (lac !== undefined && lac >= 2.0) {
-                        diffs.push(`  📌 乳酸アシドーシス疑い（Lac ${lac.toFixed(1)} mmol/L）: 敗血症・ショック・虚血・外傷等`);
-                    }
-                    if (glu !== undefined && glu > 250) {
-                        diffs.push(`  📌 ケトアシドーシス疑い（Glu ${glu} mg/dL）: DKA・AKA等`);
+                    diffs.push('  → NAGMA（高Cl性）+ HAGMA（乳酸アシドーシス/ケトアシドーシス）の混合性障害を強く疑ってください。');
+                    if (lac !== undefined && lac >= 2.0) diffs.push(`  📌 乳酸アシドーシス疑い（Lac ${lac.toFixed(1)} mmol/L）`);
+                    if (glu !== undefined && glu > 250) diffs.push(`  📌 ケトアシドーシス疑い（Glu ${glu} mg/dL）`);
+                } else {
+                    diffs.push('  ※まずはHAGMA（乳酸・ケトアシドーシス等）を否定してください。');
+                }
+
+                diffs.push('  ─ 実測データに基づく鑑別 ─');
+                if (osmolality?.urineAgEvaluated && osmolality.urineAg !== undefined) {
+                    const uag = osmolality.urineAg;
+                    if (uag < 0) {
+                        diffs.push(`  ✅ 尿アニオンギャップ (U-AG) < 0 (${uag.toFixed(0)} mEq/L)`);
+                        diffs.push('     → 尿中NH4+排泄は保たれています。');
+                        diffs.push('     → 📌 原因: 下痢（上部消化管由来）、小児・先天性Cl下痢症、回腸導管、一部の絨毛腺腫など');
+                    } else {
+                        diffs.push(`  ✅ 尿アニオンギャップ (U-AG) > 0 (${uag.toFixed(0)} mEq/L)`);
+                        diffs.push('     → 尿中NH4+排泄低下 または 測定されない陰イオン増加。');
+
+                        if (osmolality.urineEvaluated && osmolality.urineOsmGap !== undefined) {
+                            if (osmolality.urineOsmGap > 100) {
+                                diffs.push(`     ✅ 尿浸透圧ギャップ (U-OG) > 100 (${osmolality.urineOsmGap.toFixed(0)} mOsm/L)`);
+                                diffs.push('        → 📌 原因: DMケトアシドーシス回復期、トルエン中毒、D乳酸アシドーシス等');
+                            } else {
+                                diffs.push(`     ✅ 尿浸透圧ギャップ (U-OG) ≦ 100 (${osmolality.urineOsmGap.toFixed(0)} mOsm/L)`);
+                                diffs.push('        → 📌 原因: 保存期CKD、尿細管性アシドーシス(RTA)');
+                                if (uPH !== undefined) {
+                                    if (uPH > 6.0) {
+                                        diffs.push(`        → 🚨 尿pH > 6 (${uPH.toFixed(1)}): 遠位RTA (1型)を強く疑います`);
+                                    } else {
+                                        diffs.push(`        → 尿pH ≦ 6 (${uPH.toFixed(1)}): 近位RTA (2型) や 保存期CKDの可能性`);
+                                    }
+                                } else {
+                                    diffs.push('        ※尿pHを入力すると遠位RTAと近位RTAの鑑別が可能です');
+                                }
+                            }
+                        } else {
+                            diffs.push('     ※尿浸透圧(U-Osm)等を入力して尿OGを計算すると、細分類が可能です');
+                            diffs.push('     ・尿OG > 100: トルエン中毒、DKA回復期');
+                            diffs.push('     ・尿OG ≦ 100: 保存期CKD、尿細管性アシドーシス(RTA)');
+                        }
                     }
                 } else {
-                    diffs.push('  ※NAGMAであっても、まずはAGMA（乳酸・ケトアシドーシス等）を否定してください。');
+                    diffs.push('  ※尿Na, 尿K, 尿Clを入力すると 尿アニオンギャップ(U-AG) による鑑別分岐が可能です');
+                    diffs.push('  【古典的鑑別(HARDUP/血清K値による)】');
+                    diffs.push('  ・血清K低下：下痢(最多), 尿細管性アシドーシス(RTA) 1型/2型');
+                    diffs.push('  ・血清K上昇：腎機能障害(初期), RTA 4型, アルドステロン低下');
                 }
-                diffs.push('  【HARDUP に基づく鑑別（K値やU-AGによる細分化）】');
-                diffs.push('  血清K値を確認してください：');
-                diffs.push('  ・K低下：下痢(最多), 尿細管性アシドーシス(RTA) 1型/2型');
-                diffs.push('  ・K上昇：腎機能障害(初期), RTA 4型, アルドステロン低下');
-                diffs.push('  ※下痢とRTAの鑑別には尿アニオンギャップ(U-AG)が有用です。');
-                diffs.push('  （負なら下痢・消化管喪失、正ならRTAを疑います）');
             }
         } else {
             diffs.push('🟠 代謝性アシドーシス (AG未評価)');
@@ -602,7 +659,101 @@ function getDifferentials(
         diffs.push('⚡ Step5合併：AG正常型代謝性アシドーシス（下痢・RTA等を疑う）');
     }
 
+    if (osmolality?.serumEvaluated && osmolality.serumOsmGap !== undefined && osmolality.serumOsmGap > 10) {
+        diffs.push('⚡ 血清浸透圧ギャップ(OG)開大 (>10): エタノール、毒性アルコール(メタノール等)の中毒を疑う');
+    }
+
+    if (osmolality?.urineEvaluated && osmolality.urineOsmGap !== undefined) {
+        if (osmolality.urineOsmGap > 100) {
+            diffs.push('⚡ 尿浸透圧ギャップ(U-OG)高値 (>100): 尿中NH4+排泄不良（腎細管性アシドーシス(RTA)の疑い）');
+        } else if (osmolality.urineOsmGap < 0) {
+            diffs.push('⚡ 尿浸透圧ギャップ(U-OG)低値 (<0): 尿中NH4+排泄良好（下痢等の腎外喪失の存在）');
+        }
+    }
+
     return diffs;
+}
+
+// ─── Osmolality ───────────────────────────────────────────────────────────────
+function evaluateOsmolality(input: BloodGasInput): OsmolalityResult {
+    const { na, bun, glu, sOsm, uNa, uK, uCl, uUn, uGlu, uOsm } = input;
+
+    let serumEvaluated = false;
+    let calcSerumOsm: number | undefined;
+    let serumOsmGap: number | undefined;
+    let serumText = '';
+
+    if (sOsm !== undefined && na !== undefined && bun !== undefined && glu !== undefined) {
+        serumEvaluated = true;
+        calcSerumOsm = Number((2 * na + bun / 2.8 + glu / 18).toFixed(1));
+        serumOsmGap = Number((sOsm - calcSerumOsm).toFixed(1));
+        serumText = `血清浸透圧ギャップ: ${serumOsmGap} mOsm/kg\n(実測 ${sOsm} - 計算 ${calcSerumOsm})`;
+    } else if (sOsm !== undefined || bun !== undefined) {
+        serumText = '血清OGの計算には、Na, BUN, Glu, 実測血清浸透圧が全て必要です。';
+    }
+
+    let urineEvaluated = false;
+    let calcUrineOsm: number | undefined;
+    let urineOsmGap: number | undefined;
+    let urineText = '';
+
+    if (uOsm !== undefined && uNa !== undefined && uK !== undefined) {
+        urineEvaluated = true;
+        const unVal = uUn !== undefined ? uUn : 0;
+        const ugVal = uGlu !== undefined ? uGlu : 0;
+        calcUrineOsm = Number((2 * (uNa + uK) + unVal / 2.8 + ugVal / 18).toFixed(1));
+        urineOsmGap = Number((uOsm - calcUrineOsm).toFixed(1));
+        urineText = `尿浸透圧ギャップ: ${urineOsmGap} mOsm/kg\n(実測 ${uOsm} - 計算 ${calcUrineOsm})`;
+        if (uUn === undefined && uGlu === undefined) {
+            urineText += '\n※尿素窒素・尿糖が未入力のため、2×(尿Na+尿K)で簡易計算しています。';
+        }
+    } else if (uOsm !== undefined || uNa !== undefined || uK !== undefined) {
+        urineText = '尿OGの計算には、尿Na, 尿K, 実測尿浸透圧が全て必要です。';
+    }
+
+    let urineAgEvaluated = false;
+    let urineAg: number | undefined;
+    if (uNa !== undefined && uK !== undefined && uCl !== undefined) {
+        urineAgEvaluated = true;
+        urineAg = Number((uNa + uK - uCl).toFixed(1));
+        if (urineText) urineText += `\n尿アニオンギャップ(U-AG): ${urineAg} mEq/L (Na + K - Cl)`;
+        else urineText = `尿アニオンギャップ(U-AG): ${urineAg} mEq/L\n(尿OG計算は未評価)`;
+    }
+
+    let label = '尿/血清 浸透圧・AG評価';
+    let explanation = '';
+
+    if (serumEvaluated || urineEvaluated || urineAgEvaluated) {
+        explanation = [serumText, urineText].filter(Boolean).join('\n\n');
+
+        let warnings = [];
+        if (serumEvaluated && serumOsmGap! > 10) warnings.push('血清OG開大');
+        if (urineAgEvaluated && urineAg! < 0) warnings.push('U-AG負');
+        else if (urineAgEvaluated && urineAg! > 0) warnings.push('U-AG正');
+        if (urineEvaluated && urineOsmGap! > 100) warnings.push('尿OG高値');
+
+        if (warnings.length > 0) {
+            label = warnings.join(' / ');
+        } else {
+            label = '浸透圧ギャップ 等計算完了';
+        }
+    } else {
+        label = '浸透圧/尿AG 未評価';
+        explanation = '必要な項目（Na, BUN, Glu, 浸透圧実測値など）が入力されていません。';
+    }
+
+    return {
+        serumEvaluated,
+        calcSerumOsm,
+        serumOsmGap,
+        urineEvaluated,
+        calcUrineOsm,
+        urineOsmGap,
+        urineAgEvaluated,
+        urineAg,
+        label,
+        explanation
+    };
 }
 
 // ─── Main Entry Point ─────────────────────────────────────────────────────────
@@ -628,7 +779,8 @@ export function evaluateBloodGas(input: BloodGasInput): BloodGasResult {
     // step2.primaryDisorderを渡してhiddenHagmaを代謝性アシドーシス時のみ発動させる
     const step4 = evaluateStep4(corrected.na, corrected.cl, corrected.hco3, corrected.alb ?? 4.0, step2.primaryDisorder, corrected.ag, corrected.lac, corrected.glu);
     const step5 = evaluateStep5(corrected.hco3, step4.correctedAg, step4.applicable && step4.agElevated);
-    const differentials = getDifferentials(step2.primaryDisorder, step4.applicable, step4.agElevated, step3.status, step5.status, corrected.glu, corrected.lac, corrected.uCl, step4.hiddenHagma);
+    const osmolality = evaluateOsmolality(corrected);
+    const differentials = getDifferentials(step2.primaryDisorder, step4.applicable, step4.agElevated, step3.status, step5.status, corrected.glu, corrected.lac, corrected.uCl, step4.hiddenHagma, osmolality, corrected.uPH);
 
     return {
         correctedInput: corrected,
@@ -638,6 +790,7 @@ export function evaluateBloodGas(input: BloodGasInput): BloodGasResult {
         step3,
         step4,
         step5,
+        osmolality,
         differentials,
     };
 }

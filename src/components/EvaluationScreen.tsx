@@ -24,15 +24,23 @@ const FIELD_CONFIGS: FieldConfig[] = [
     { key: 'pCO2', label: 'PaCO₂', unit: 'mmHg', placeholder: '40', normalRange: '35〜45', step: '0.5', min: '1', max: '150' },
     { key: 'pO2', label: 'PaO₂', unit: 'Torr', placeholder: '90', normalRange: '80〜100', step: '1', min: '10', max: '600' },
     { key: 'hco3', label: 'HCO₃⁻', unit: 'mEq/L', placeholder: '24', normalRange: '22〜26', step: '0.5', min: '1', max: '60' },
-    { key: 'ag', label: 'AG', unit: 'mEq/L', placeholder: '12', normalRange: '12±2', step: '0.1', min: '0', max: '50' },
-    { key: 'fio2', label: 'FiO₂', unit: '%', placeholder: '21', normalRange: '室内気: 21', step: '1', min: '21', max: '100' },
+    { key: 'ag', label: 'AG', unit: 'mEq/L', placeholder: '空欄で自動計算', normalRange: '空欄でNa,Clから自動計算', step: '0.1', min: '0', max: '50' },
+    { key: 'fio2', label: 'FiO₂', unit: '%', placeholder: '21', normalRange: '室内気:21, 鼻カヌラ/マスク入力可', step: '1', min: '21', max: '100', optional: true },
     { key: 'na', label: 'Na⁺', unit: 'mEq/L', placeholder: '140', normalRange: '136〜145', step: '1', min: '100', max: '180', optional: true },
     { key: 'cl', label: 'Cl⁻', unit: 'mEq/L', placeholder: '104', normalRange: '98〜108', step: '1', min: '60', max: '140', optional: true },
     { key: 'alb', label: 'Alb', unit: 'g/dL', placeholder: '4.0', normalRange: 'AG補正用', step: '0.1', min: '0.5', max: '6.0', optional: true },
     // LacとGluは隠れHAGMA検出に不可欠なため常時表示（診断前から入力できる必要がある）
     { key: 'lac', label: 'Lac', unit: 'mmol/L', placeholder: '1.0', normalRange: '0.5〜1.5', step: '0.1', min: '0', max: '30' },
     { key: 'glu', label: 'Glu', unit: 'mg/dL', placeholder: '100', normalRange: '70〜110', step: '1', min: '20', max: '1500' },
-    { key: 'uCl', label: 'U-Cl', unit: 'mEq/L', placeholder: '15', normalRange: '代謝性アルカローシス結別用', step: '1', min: '0', max: '200', optional: true },
+    { key: 'bun', label: 'BUN', unit: 'mg/dL', placeholder: '15', normalRange: '8〜20', step: '1', min: '0', max: '200', optional: true },
+    { key: 'sOsm', label: '実測 血清浸透圧', unit: 'mOsm/kg', placeholder: '290', normalRange: '275〜295', step: '1', min: '200', max: '400', optional: true },
+    { key: 'uNa', label: 'U-Na', unit: 'mEq/L', placeholder: '50', normalRange: '尿OG用', step: '1', min: '0', max: '300', optional: true },
+    { key: 'uK', label: 'U-K', unit: 'mEq/L', placeholder: '30', normalRange: '尿OG用', step: '1', min: '0', max: '200', optional: true },
+    { key: 'uCl', label: 'U-Cl', unit: 'mEq/L', placeholder: '15', normalRange: '代謝アルカローシス等', step: '1', min: '0', max: '200', optional: true },
+    { key: 'uOsm', label: '実測 尿浸透圧', unit: 'mOsm/kg', placeholder: '400', normalRange: '尿OG用', step: '1', min: '50', max: '1400', optional: true },
+    { key: 'uUn', label: 'U-UN', unit: 'mg/dL', placeholder: '500', normalRange: '尿素窒素・省略可', step: '1', min: '0', max: '3000', optional: true },
+    { key: 'uGlu', label: 'U-Glu', unit: 'mg/dL', placeholder: '0', normalRange: '尿糖・省略可', step: '1', min: '0', max: '5000', optional: true },
+    { key: 'uPH', label: '尿pH', unit: '', placeholder: '5.5', normalRange: '4.5〜8.0 (RTA鑑別用)', step: '0.1', min: '4.0', max: '9.0', optional: true },
 ];
 
 function isAbnormal(key: string, value: number): boolean {
@@ -128,7 +136,15 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
             alb: values['alb'] ? parseFloat(values['alb']) : undefined,
             lac: values['lac'] ? parseFloat(values['lac']) : undefined,
             glu: values['glu'] ? parseFloat(values['glu']) : undefined,
+            bun: values['bun'] ? parseFloat(values['bun']) : undefined,
+            sOsm: values['sOsm'] ? parseFloat(values['sOsm']) : undefined,
+            uNa: values['uNa'] ? parseFloat(values['uNa']) : undefined,
+            uK: values['uK'] ? parseFloat(values['uK']) : undefined,
             uCl: values['uCl'] ? parseFloat(values['uCl']) : undefined,
+            uOsm: values['uOsm'] ? parseFloat(values['uOsm']) : undefined,
+            uUn: values['uUn'] ? parseFloat(values['uUn']) : undefined,
+            uGlu: values['uGlu'] ? parseFloat(values['uGlu']) : undefined,
+            uPH: values['uPH'] ? parseFloat(values['uPH']) : undefined,
         };
 
         return evaluateBloodGas(input);
@@ -150,11 +166,14 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
         const isMetAcidosis = primaryDisorder.includes('metabolic_acidosis') || primaryDisorder === 'mixed_acidosis';
         const isMetAlkalosis = primaryDisorder.includes('metabolic_alkalosis') || primaryDisorder === 'mixed_alkalosis';
 
-        if (['na', 'cl', 'alb', 'lac', 'glu'].includes(config.key as string)) {
+        if (['na', 'cl', 'alb', 'lac', 'glu', 'bun', 'sOsm', 'uNa', 'uK', 'uOsm', 'uUn', 'uGlu', 'uPH'].includes(config.key as string)) {
             return isMetAcidosis;
         }
         if (config.key === 'uCl') {
-            return isMetAlkalosis;
+            return isMetAlkalosis || isMetAcidosis; // U-AG計算用にも表示
+        }
+        if (config.key === 'fio2' || config.key === 'pO2') {
+            return true;
         }
         // If there are other optionals, default to false or handle them
         return false;
@@ -266,6 +285,16 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
                                             onChange={e => handleChange(field.key as string, e.target.value)}
                                             autoComplete="off"
                                         />
+                                        {field.key === 'sOsm' && result?.osmolality?.calcSerumOsm !== undefined && (
+                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', textAlign: 'right' }}>
+                                                計算値: {result.osmolality.calcSerumOsm} mOsm/kg
+                                            </div>
+                                        )}
+                                        {field.key === 'uOsm' && result?.osmolality?.calcUrineOsm !== undefined && (
+                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', textAlign: 'right' }}>
+                                                計算値: {result.osmolality.calcUrineOsm} mOsm/kg
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -404,6 +433,17 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
                             explanation={result.step5.explanation}
                             defaultExpanded={result.step5.applicable && result.step5.status !== 'normal'}
                         />
+
+                        {result.osmolality && (result.osmolality.serumEvaluated || result.osmolality.urineEvaluated || result.osmolality.urineAgEvaluated) && (
+                            <StepCard
+                                stepNum="鑑別評価"
+                                title="浸透圧ギャップ(OG)・AG 評価"
+                                badgeText={result.osmolality.label}
+                                badgeVariant={result.osmolality.label.includes('開大') || result.osmolality.label.includes('U-AG正') || result.osmolality.label.includes('尿OG高値') ? 'warning' : 'info'}
+                                explanation={result.osmolality.explanation}
+                                defaultExpanded={true}
+                            />
+                        )}
                     </div>
 
                     {/* Differentials */}

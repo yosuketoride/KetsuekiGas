@@ -10,11 +10,30 @@ interface ChecklistItem {
 
 const CHECKLIST_ITEMS: Record<string, ChecklistItem[]> = {
     'AGMA': [
-        { id: 'trauma_lactic', label: '外傷・大量出血・手術直後', resultText: '外傷性乳酸アシドーシス（組織低灌流）', resultDesc: '外傷・出血・手術による組織虚血で嫌気性代謝が亢進し乳酸が産生されます。出血コントロール・輸血・循環改善が最優先です。' },
-        { id: 'uremia', label: 'eGFR著明低下・透析歴', resultText: '腎機能低下に伴うアシドーシス（酸排泄障害）', resultDesc: '高度の腎機能低下による酸の排泄障害です。原疾患の治療・必要に応じ透析導入を検討します。' },
-        { id: 'dka', label: '糖尿病・著明な高血糖・尿ケトン陽性', resultText: '糖尿病性ケトアシドーシス (DKA) / AKA', resultDesc: 'インスリン不足に伴うケトン体蓄積が原因です。生理食塩水の大量輸液とインスリン持続静注を開始してください。' },
-        { id: 'lactic', label: 'ショック・敗血症・Lac>2', resultText: '乳酸アシドーシス (Lactic acidosis)', resultDesc: '組織低灌流（ショック等）に起因します。原因（敗血症、出血等）の除去と循環動態の改善が最優先です。' },
-        { id: 'toxin', label: '重度飲酒歴・中毒（メタノール等）疑い', resultText: '中毒性アシドーシス', resultDesc: 'メタノール、エチレングリコール等の摂取が疑われます。浸透圧ギャップの測定や特異的治療を検討してください。' },
+        {
+            id: 'renal',
+            label: '末期腎不全（eGFR著明低下・透析歴）',
+            resultText: '腎性アシドーシス（高度腎機能低下）',
+            resultDesc: '高度の腎機能低下により酸の排泄が障害されます。硫酸・リン酸などの有機酸が蓄積しAGが開大します。原疾患治療・必要に応じ透析導入を検討してください。',
+        },
+        {
+            id: 'lactate',
+            label: '乳酸上昇（Lac ≥ 2 mmol/L）',
+            resultText: '乳酸アシドーシス（Type A / Type B）',
+            resultDesc: '【主な原因】\n▶ 敗血症・感染性ショック（最多）\n▶ 循環不全・心原性ショック・出血性ショック\n▶ 腸管虚血（腸間膜動脈閉塞）\n▶ てんかん重積発作後\n▶ ビタミンB1（チアミン）欠乏\n\n組織低灌流の是正（輸液・昇圧剤）と原因検索を最優先にしてください。',
+        },
+        {
+            id: 'ketone',
+            label: 'ケトン体上昇（尿/血清ケトン陽性・高血糖）',
+            resultText: 'ケトアシドーシス',
+            resultDesc: '【原因の分類】\n▶ 糖尿病性ケトアシドーシス（DKA）：インスリン不足・高血糖を伴う。大量輸液＋インスリン持続静注が必要。\n▶ アルコール性ケトアシドーシス（AKA）：血糖は正常〜低値のことがある。グルコース＋チアミン補充。\n▶ 飢餓性ケトアシドーシス：長期絶食。補液・糖質投与で改善。',
+        },
+        {
+            id: 'toxin',
+            label: '薬物・中毒疑い（飲酒歴・薬物摂取歴・浸透圧ギャップ上昇）',
+            resultText: '中毒性アシドーシス',
+            resultDesc: '【主な原因】\n▶ メタノール中毒：視力障害を伴うことあり。ホメピゾール・透析。\n▶ エチレングリコール中毒：シュウ酸カルシウム尿（尿蓚酸塩）。ホメピゾール・透析。\n▶ サリチル酸中毒：呼吸性アルカローシスとの混合が特徴。活性炭・透析。\n▶ プロピレングリコール（持続鎮静薬の溶媒）\n\n浸透圧ギャップ（OG）= 実測浸透圧 − 計算浸透圧（2×Na + Glu/18 + BUN/2.8）。OG >10 で中毒性アルコール類を疑います。',
+        },
     ],
     'NAGMA': [
         { id: 'trauma_dilutional', label: '外傷・手術後・大量輸液（生食）', resultText: '外傷/手術後の高Cl性（希釈性）アシドーシス', resultDesc: '大量生食輸液によりCl⁻が上昇し、見かけ上HCO₃⁻が低下する事が原因です。※Lac高値時は「隠れHAGMA」にも注意してください。' },
@@ -144,7 +163,19 @@ export default function DifferentialWizard({ result }: { result: BloodGasResult 
 
                         {selectedItems.length === 0 && (
                             <div className="dw-no-result">
-                                その他の潜在的な原因（MUDPILESやHARDUPなど）を考慮し、追加検査を検討してください。
+                                {treeKey === 'AGMA' ? (
+                                    <>
+                                        <div style={{ marginBottom: '8px', fontWeight: 600 }}>⚗️ 浸透圧ギャップ（OG）を測定してください</div>
+                                        <div style={{ fontSize: '0.85em', lineHeight: 1.6 }}>
+                                            腎機能・乳酸・ケトン体・中毒の明らかな原因が見当たりません。<br />
+                                            <strong>OG = 実測浸透圧 − 計算浸透圧（2×Na + Glu/18 + BUN/2.8）</strong><br />
+                                            OG &gt; 10 → 毒性アルコール中毒（メタノール、エチレングリコール等）を疑う<br />
+                                            OG 正常 → その他の稀な原因を検索してください
+                                        </div>
+                                    </>
+                                ) : (
+                                    'その他の潜在的な原因を考慮し、追加検査を検討してください。'
+                                )}
                             </div>
                         )}
 
