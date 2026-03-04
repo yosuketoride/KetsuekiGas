@@ -26,6 +26,7 @@ const FIELD_CONFIGS: FieldConfig[] = [
     { key: 'hco3', label: 'HCO₃⁻', unit: 'mEq/L', placeholder: '24', normalRange: '22〜26', step: '0.5', min: '1', max: '60' },
     { key: 'ag', label: 'AG', unit: 'mEq/L', placeholder: '空欄で自動計算', normalRange: '空欄でNa,Clから自動計算', step: '0.1', min: '0', max: '50' },
     { key: 'fio2', label: 'FiO₂', unit: '%', placeholder: '21', normalRange: '室内気:21, 鼻カヌラ/マスク入力可', step: '1', min: '21', max: '100', optional: true },
+    { key: 'age', label: '年齢 (Age)', unit: '歳', placeholder: '65', normalRange: 'PaO₂の加齢補正用', step: '1', min: '0', max: '120', optional: true },
     { key: 'na', label: 'Na⁺', unit: 'mEq/L', placeholder: '140', normalRange: '136〜145', step: '1', min: '100', max: '180', optional: true },
     { key: 'cl', label: 'Cl⁻', unit: 'mEq/L', placeholder: '104', normalRange: '98〜108', step: '1', min: '60', max: '140', optional: true },
     { key: 'alb', label: 'Alb', unit: 'g/dL', placeholder: '4.0', normalRange: 'AG補正用', step: '0.1', min: '0.5', max: '6.0', optional: true },
@@ -145,6 +146,7 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
             uUn: values['uUn'] ? parseFloat(values['uUn']) : undefined,
             uGlu: values['uGlu'] ? parseFloat(values['uGlu']) : undefined,
             uPH: values['uPH'] ? parseFloat(values['uPH']) : undefined,
+            age: values['age'] ? parseFloat(values['age']) : undefined,
         };
 
         return evaluateBloodGas(input);
@@ -172,7 +174,7 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
         if (config.key === 'uCl') {
             return isMetAlkalosis || isMetAcidosis; // U-AG計算用にも表示
         }
-        if (config.key === 'fio2' || config.key === 'pO2') {
+        if (config.key === 'fio2' || config.key === 'pO2' || config.key === 'age') {
             return true;
         }
         // If there are other optionals, default to false or handle them
@@ -358,14 +360,14 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
                     )}
 
                     <div className="step-cards-container">
-                        {result.oxygenation.evaluated && (
+                        {(result.oxygenation.evaluated || result.oxygenation.label === '静脈血(VBG)酸素化評価不可') && (
                             <StepCard
                                 stepNum="O₂"
                                 title="酸素化の評価"
                                 badgeText={result.oxygenation.label}
-                                badgeVariant={result.oxygenation.isHypoxemia ? 'acidemia' : (result.oxygenation.isArdsRisk ? 'warning' : 'info')}
+                                badgeVariant={!result.oxygenation.evaluated ? 'warning' : result.oxygenation.isHypoxemia ? 'acidemia' : (result.oxygenation.isArdsRisk ? 'warning' : 'info')}
                                 explanation={result.oxygenation.explanation}
-                                defaultExpanded={false}
+                                defaultExpanded={!result.oxygenation.evaluated}
                             />
                         )}
 
@@ -419,12 +421,13 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
 
                         <StepCard
                             stepNum="補正・合併評価"
-                            title="補正HCO₃⁻（AG開大時）"
+                            title="Delta Ratio / 補正HCO₃⁻"
                             badgeText={
                                 !result.step5.applicable ? 'スキップ' :
-                                    result.step5.status === 'normal' ? `合併なし (${result.step5.correctedHco3.toFixed(0)})` :
-                                        result.step5.status === 'metabolic_alkalosis_combined' ? `代謝性アルカローシス合併` :
-                                            `AG正常型アシドーシス合併`
+                                    result.step5.deltaRatio !== undefined ? `ΔRatio: ${result.step5.deltaRatio.toFixed(2)}` :
+                                        result.step5.status === 'normal' ? `合併なし (${result.step5.correctedHco3.toFixed(0)})` :
+                                            result.step5.status === 'metabolic_alkalosis_combined' ? `代謝アルカローシス合併` :
+                                                `NAGMA合併`
                             }
                             badgeVariant={
                                 !result.step5.applicable ? 'skip' :

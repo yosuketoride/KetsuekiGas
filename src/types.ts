@@ -24,6 +24,7 @@ export interface BloodGasInput {
     uPH?: number;   // Urine pH (optional)
     pO2?: number;   // mmHg (optional)
     fio2?: number;  // % e.g. 21 to 100 (optional)
+    age?: number;   // age (optional)
 }
 
 // Step evaluation results
@@ -58,8 +59,10 @@ export interface OxygenationResult {
     evaluated: boolean;
     pfRatio?: number;     // PaO2 / FiO2
     aado2?: number;       // A-aDO2
+    expectedPaO2?: number; // 予想PaO2 (加齢補正)
     isHypoxemia?: boolean; // PaO2 < 60
     isArdsRisk?: boolean;  // P/F < 300
+    isAgeRelatedHypoxemia?: boolean; // 真の低酸素ではなく加齢による低下の場合
     label: string;
     explanation: string;
 }
@@ -95,6 +98,7 @@ export interface Step5Result {
     applicable: boolean;
     correctedHco3: number;
     deltaAg: number;
+    deltaRatio?: number; // Delta Ratio = (AG - 12) / (24 - HCO3)
     status: 'metabolic_alkalosis_combined' | 'normal' | 'normal_ag_acidosis_combined';
     label: string;
     explanation: string;

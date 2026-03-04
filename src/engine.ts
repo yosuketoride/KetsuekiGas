@@ -1,4 +1,5 @@
 import type {
+    BloodType,
     BloodGasInput,
     BloodGasResult,
     Step1Result,
@@ -24,7 +25,15 @@ function applyVBGCorrection(input: BloodGasInput): BloodGasInput {
 }
 
 // ─── Oxygenation ─────────────────────────────────────────────────────────────────
-function evaluateOxygenation(po2?: number, fio2_input?: number, pco2?: number): OxygenationResult {
+function evaluateOxygenation(po2?: number, fio2_input?: number, pco2?: number, age?: number, bloodType?: BloodType): OxygenationResult {
+    if (bloodType === 'venous') {
+        return {
+            evaluated: false,
+            label: '静脈血(VBG)酸素化評価不可',
+            explanation: '⚠️ VBGのpO₂は動脈血酸素化の評価に使用できません。\n循環状態や末梢組織の酸素消費量に大きく左右されるため、正確なP/F比やA-aDO₂の算出にはABGが必要です。'
+        };
+    }
+
     if (po2 === undefined) {
         return {
             evaluated: false,
@@ -47,16 +56,48 @@ function evaluateOxygenation(po2?: number, fio2_input?: number, pco2?: number): 
     const pAO2 = 713 * fio2 - (pco2 ?? 40) / 0.8;
     const aado2 = pAO2 - po2;
 
-    let explanation = `P / F比: ${(pfRatio).toFixed(0)} (PaO₂ ${po2} ÷ FiO₂ ${(fio2 * 100).toFixed(0)}%) \n`;
-    explanation += `A - aDO₂ (推定): ${aado2.toFixed(1)} mmHg\n`;
+    // Age-based expected PaO2 (Supine approximation: 104 - 0.27 * Age)
+    let expectedPaO2: number | undefined;
+    if (age !== undefined) {
+        expectedPaO2 = Math.round(104 - 0.27 * age);
+    }
 
-    let label = `P / F比 ${pfRatio.toFixed(0)} `;
+    let isAgeRelatedHypoxemia = false;
+    let isMildHypoxemia = false;
+
+    if (po2 < 80 && po2 >= 60 && !isArdsRisk) {
+        // Allow a broader margin of error (-10 Torr) for the supine approximation in clinical practice
+        if (age !== undefined && po2 >= expectedPaO2! - 10) {
+            isAgeRelatedHypoxemia = true;
+        } else {
+            isMildHypoxemia = true;
+        }
+    }
+
+    let explanation = `P / F比: ${(pfRatio).toFixed(0)} (PaO₂ ${po2} ÷ FiO₂ ${(fio2 * 100).toFixed(0)}%) \n`;
+    explanation += `A - aDO₂ (推定): ${aado2.toFixed(1)} Torr\n`;
+
+    if (expectedPaO2 !== undefined) {
+        explanation += `年齢(${age}歳)予測PaO₂: 約 ${expectedPaO2} Torr\n`;
+    }
+
+    let label = `P/F比 ${pfRatio.toFixed(0)}`;
     if (isHypoxemia) {
-        label = `🚨 低酸素血症(${label})`;
-        explanation += `🚨 PaO₂ <60 Torr: 急性の低酸素血症です。直ちに酸素投与や原因検索が必要です。`;
+        label = `🚨 呼吸不全(${label})`;
+        explanation += `🚨 PaO₂ <60 Torr: 急性の低酸素血症（呼吸不全）です。直ちに酸素投与や原因検索が必要です。`;
     } else if (isArdsRisk) {
         label = `⚠️ 酸素化低下(${label})`;
         explanation += `⚠️ P / F < 300: 急性肺障害などの酸素化低下の基準を満たしています。`;
+    } else if (isMildHypoxemia) {
+        label = `⚠️ 軽度低酸素(${label})`;
+        if (age !== undefined) {
+            explanation += `⚠️ PaO₂ <80 Torr: 年齢から予測されるPaO₂(${expectedPaO2} Torr)を下回っており、軽度の低酸素血症があります。`;
+        } else {
+            explanation += `⚠️ PaO₂ <80 Torr: 軽度の低酸素血症があります。年齢を入力すると加齢の影響を評価できます。`;
+        }
+    } else if (isAgeRelatedHypoxemia) {
+        label = `正常(加齢考慮) (${label})`;
+        explanation += `💡 PaO₂ は80未満ですが、年齢相応の予測値(${expectedPaO2} Torr付近)を満たしており、加齢に伴う生理的な低下と考えられます。`;
     } else {
         label = `正常な酸素化(${label})`;
         explanation += `酸素化は保たれています。`;
@@ -68,6 +109,8 @@ function evaluateOxygenation(po2?: number, fio2_input?: number, pco2?: number): 
         aado2,
         isHypoxemia,
         isArdsRisk,
+        isAgeRelatedHypoxemia,
+        expectedPaO2,
         label,
         explanation
     };
@@ -224,19 +267,20 @@ function evaluateStep3(
         // Otsuka label
         const otsukaLabel = pCO2 < 35 ? "代償あり(PaCO₂ < 35)" : "代償なし(PaCO₂ ≧ 35)";
 
-        // Winter's formula
-        const expectedPco2 = hco3 + 15;
-        expectedMin = expectedPco2 - 1.0;
-        expectedMax = expectedPco2 + 1.0;
+        // Winter's formula (正確な式: 1.5 × HCO3 + 8 ± 2)
+        const expectedPco2 = 1.5 * hco3 + 8;
+        expectedMin = expectedPco2 - 2.0;
+        expectedMax = expectedPco2 + 2.0;
         actualValue = pCO2;
-        label = `予想PaCO₂ = HCO₃⁻ + 15 = ${expectedPco2.toFixed(1)} mmHg`;
+        label = `Winter's式 予想PaCO₂ = 1.5×HCO₃⁻ + 8 = ${expectedPco2.toFixed(1)} ± 2 mmHg`;
+
 
         const diff = pCO2 - expectedPco2;
 
-        if (diff < -1) {
+        if (diff < -2) {
             status = 'inadequate_low';
-            explanation = `【${otsukaLabel}】\nPaCO₂実測値が予測より低い（差分 ${diff.toFixed(1)} <-1）ため、呼吸性アルカローシスの合併があります。\n予測値: ${expectedPco2.toFixed(1)} / 実測値: ${pCO2.toFixed(1)} mmHg`;
-        } else if (diff >= -1 && diff <= 1) {
+            explanation = `【${otsukaLabel}】\nPaCO₂実測値が予測より低い（差分 ${diff.toFixed(1)} <-2）ため、呼吸性アルカローシスの合併があります。\n予測値: ${expectedPco2.toFixed(1)} / 実測値: ${pCO2.toFixed(1)} mmHg`;
+        } else if (diff >= -2 && diff <= 2) {
             status = 'adequate';
             explanation = `【${otsukaLabel}】\nPaCO₂の低下は適切です（差分 ${diff.toFixed(1)}）。混合障害なし。\n予測値: ${expectedPco2.toFixed(1)} / 実測値: ${pCO2.toFixed(1)} mmHg`;
         } else {
@@ -408,42 +452,75 @@ function evaluateStep4(
     return { applicable: true, ag, correctedAg, agElevated, hiddenHagma, hiddenHagmaExplanation, albUsed: alb, label, explanation };
 }
 
-// ─── Step 5: Corrected HCO3 ───────────────────────────────────────────────────
+// ─── Step 5: Corrected HCO3 & Delta Ratio ──────────────────────────────────────
 function evaluateStep5(hco3: number, correctedAg: number, applicable: boolean): Step5Result {
     if (!applicable) {
         return {
             applicable: false,
             correctedHco3: 0,
             deltaAg: 0,
+            deltaRatio: 0,
             status: 'normal',
             label: 'AG非開大のためスキップ',
-            explanation: 'AG開大がないため補正HCO₃⁻の計算は不要です。',
+            explanation: 'AG開大がないため補正HCO₃⁻およびDelta Ratioの計算は不要です。',
         };
     }
 
     const deltaAg = correctedAg - 12;
     const correctedHco3 = hco3 + deltaAg;
+    const deltaHco3 = 24 - hco3;
+
+    // Delta Ratio = ΔAG / ΔHCO3
+    let deltaRatio: number | undefined;
+    if (deltaHco3 !== 0) {
+        deltaRatio = deltaAg / deltaHco3;
+    }
 
     let status: Step5Result['status'];
     let label: string;
     let explanation = `補正HCO₃⁻ = 実測HCO₃⁻ + (補正AG − 12) = ${hco3.toFixed(1)} + ${deltaAg.toFixed(1)} = ${correctedHco3.toFixed(1)} mEq/L\n`;
 
-    if (correctedHco3 > 26) {
-        status = 'metabolic_alkalosis_combined';
-        label = `補正HCO₃⁻ = ${correctedHco3.toFixed(1)} → 代謝性アルカローシス合併`;
-        explanation += `✅ 補正HCO₃⁻ > 26 → AG開大性代謝性アシドーシスに加え、代謝性アルカローシスが合併しています（嘔吐・利尿薬等を疑う）。`;
-    } else if (correctedHco3 < 22) {
-        status = 'normal_ag_acidosis_combined';
-        label = `補正HCO₃⁻ = ${correctedHco3.toFixed(1)} → AG正常型代謝性アシドーシス合併`;
-        explanation += `✅ 補正HCO₃⁻ < 22 → AG開大性代謝性アシドーシスに加え、AG正常型代謝性アシドーシスが合併しています（下痢・RTA等を疑う）。`;
-    } else {
-        status = 'normal';
-        label = `補正HCO₃⁻ = ${correctedHco3.toFixed(1)} → 追加の代謝性障害なし`;
-        // changed from "22〜26" to display accurately, also allowing exact edge cases if needed.
-        explanation += `補正HCO₃⁻ 22〜26 → 追加の代謝性障害の合併なし。`;
+    if (deltaRatio !== undefined) {
+        explanation += `Delta Ratio (ΔAG/ΔHCO₃⁻) = ${deltaAg.toFixed(1)} / ${deltaHco3.toFixed(1)} = ${deltaRatio.toFixed(2)}\n`;
     }
 
-    return { applicable: true, correctedHco3, deltaAg, status, label, explanation };
+    // Determine status primarily by Delta Ratio if available, fallback to correctedHco3
+    if (deltaRatio !== undefined) {
+        if (deltaRatio < 0.4) {
+            status = 'normal_ag_acidosis_combined';
+            label = `Delta Ratio = ${deltaRatio.toFixed(2)} (< 0.4) → 純粋なNAGMAに近い、又は高度なNAGMA合併`;
+            explanation += `✅ Delta Ratio < 0.4 → 高度なAG正常型代謝性アシドーシス(NAGMA)の合併（下痢・RTA等）を強く疑います。`;
+        } else if (deltaRatio < 1.0) {
+            status = 'normal_ag_acidosis_combined';
+            label = `Delta Ratio = ${deltaRatio.toFixed(2)} (0.4 - 1.0) → HAGMAとNAGMAの混合`;
+            explanation += `✅ Delta Ratio 0.4〜1.0 → AG開大性代謝性アシドーシス(HAGMA)に、正常AG性代謝性アシドーシス(NAGMA)が合併しています。`;
+        } else if (deltaRatio <= 2.0) {
+            status = 'normal';
+            label = `Delta Ratio = ${deltaRatio.toFixed(2)} (1.0 - 2.0) → 単純なHAGMA`;
+            explanation += `✅ Delta Ratio 1.0〜2.0 → 単独のHAGMAとして矛盾しません（乳酸アシドーシスは約1.6、ケトアシドーシスは約1.0が典型）。`;
+        } else {
+            status = 'metabolic_alkalosis_combined';
+            label = `Delta Ratio = ${deltaRatio.toFixed(2)} (> 2.0) → 代謝性アルカローシスの合併`;
+            explanation += `✅ Delta Ratio > 2.0 → AG増加に比べてHCO₃⁻の低下が軽度です。代謝性アルカローシスが合併しています（嘔吐・利尿薬等を疑う）。`;
+        }
+    } else {
+        // Fallback to correctedHco3 if deltaHco3 is 0 (i.e. HCO3 is 24 exactly)
+        if (correctedHco3 > 26) {
+            status = 'metabolic_alkalosis_combined';
+            label = `補正HCO₃⁻ = ${correctedHco3.toFixed(1)} → 代謝性アルカローシス合併`;
+            explanation += `✅ 補正HCO₃⁻ > 26 → 代謝性アルカローシスが合併しています（嘔吐・利尿薬等を疑う）。`;
+        } else if (correctedHco3 < 22) {
+            status = 'normal_ag_acidosis_combined';
+            label = `補正HCO₃⁻ = ${correctedHco3.toFixed(1)} → NAGMA合併`;
+            explanation += `✅ 補正HCO₃⁻ < 22 → AG正常型代謝性アシドーシスが合併しています（下痢・RTA等を疑う）。`;
+        } else {
+            status = 'normal';
+            label = `補正HCO₃⁻ = ${correctedHco3.toFixed(1)} → 追加の代謝性障害なし`;
+            explanation += `補正HCO₃⁻ 22〜26 → 追加の代謝性障害の合併なし。`;
+        }
+    }
+
+    return { applicable: true, correctedHco3, deltaAg, deltaRatio, status, label, explanation };
 }
 
 // ─── Differentials ────────────────────────────────────────────────────────────
@@ -459,7 +536,8 @@ function getDifferentials(
     uCl?: number,
     hiddenHagma?: boolean,
     osmolality?: OsmolalityResult,
-    uPH?: number
+    uPH?: number,
+    deltaRatio?: number
 ): string[] {
     const diffs: string[] = [];
 
@@ -484,6 +562,26 @@ function getDifferentials(
             if (agElevated) {
                 diffs.push('🔴 AG開大性代謝性アシドーシス（HAGMA）');
                 diffs.push('  ─ 以下の順に原因を確認してください ─');
+
+                // Delta Ratio Interpretation
+                if (deltaRatio !== undefined) {
+                    if (deltaRatio < 0.4) {
+                        diffs.push(`  📌 Delta Ratio = ${deltaRatio.toFixed(2)} (< 0.4): 純粋なNAGMAに近い、又は高度なNAGMA合併`);
+                        diffs.push('    → HAGMAに加え、AG正常型代謝性アシドーシス（下痢・RTA等）の合併を強く疑います。');
+                    } else if (deltaRatio < 1.0) {
+                        diffs.push(`  📌 Delta Ratio = ${deltaRatio.toFixed(2)} (0.4 - 1.0): HAGMAとNAGMAの混合`);
+                        diffs.push('    → HAGMAに加え、AG正常型代謝性アシドーシス（下痢・RTA等）が合併しています。');
+                    } else if (deltaRatio <= 2.0) {
+                        diffs.push(`  📌 Delta Ratio = ${deltaRatio.toFixed(2)} (1.0 - 2.0): 単純なHAGMA`);
+                        diffs.push('    → 単独のHAGMAとして矛盾しません（乳酸アシドーシスは約1.6、ケトアシドーシスは約1.0が典型）。');
+                    } else { // deltaRatio > 2.0
+                        diffs.push(`  📌 Delta Ratio = ${deltaRatio.toFixed(2)} (> 2.0): 代謝性アルカローシスの合併`);
+                        diffs.push('    → HAGMAに加え、代謝性アルカローシス（嘔吐・利尿薬等）が合併しています。');
+                    }
+                } else {
+                    diffs.push('  ※Delta Ratioを計算すると、HAGMAに合併する他の代謝性障害の有無を評価できます。');
+                }
+
 
                 // ① 末期腎不全
                 diffs.push('  ① 末期腎不全（eGFR著明低下・透析歴）');
@@ -550,11 +648,11 @@ function getDifferentials(
                         diffs.push('     → 尿中NH4+排泄低下 または 測定されない陰イオン増加。');
 
                         if (osmolality.urineEvaluated && osmolality.urineOsmGap !== undefined) {
-                            if (osmolality.urineOsmGap > 100) {
-                                diffs.push(`     ✅ 尿浸透圧ギャップ (U-OG) > 100 (${osmolality.urineOsmGap.toFixed(0)} mOsm/L)`);
+                            if (osmolality.urineOsmGap > 150) {
+                                diffs.push(`     ✅ 尿浸透圧ギャップ (U-OG) > 150 (${osmolality.urineOsmGap.toFixed(0)} mOsm/L)`);
                                 diffs.push('        → 📌 原因: DMケトアシドーシス回復期、トルエン中毒、D乳酸アシドーシス等');
                             } else {
-                                diffs.push(`     ✅ 尿浸透圧ギャップ (U-OG) ≦ 100 (${osmolality.urineOsmGap.toFixed(0)} mOsm/L)`);
+                                diffs.push(`     ✅ 尿浸透圧ギャップ (U-OG) ≦ 150 (${osmolality.urineOsmGap.toFixed(0)} mOsm/L)`);
                                 diffs.push('        → 📌 原因: 保存期CKD、尿細管性アシドーシス(RTA)');
                                 if (uPH !== undefined) {
                                     if (uPH > 6.0) {
@@ -568,8 +666,8 @@ function getDifferentials(
                             }
                         } else {
                             diffs.push('     ※尿浸透圧(U-Osm)等を入力して尿OGを計算すると、細分類が可能です');
-                            diffs.push('     ・尿OG > 100: トルエン中毒、DKA回復期');
-                            diffs.push('     ・尿OG ≦ 100: 保存期CKD、尿細管性アシドーシス(RTA)');
+                            diffs.push('     ・尿OG > 150: トルエン中毒、DKA回復期');
+                            diffs.push('     ・尿OG ≦ 150: 保存期CKD、尿細管性アシドーシス(RTA)');
                         }
                     }
                 } else {
@@ -664,8 +762,8 @@ function getDifferentials(
     }
 
     if (osmolality?.urineEvaluated && osmolality.urineOsmGap !== undefined) {
-        if (osmolality.urineOsmGap > 100) {
-            diffs.push('⚡ 尿浸透圧ギャップ(U-OG)高値 (>100): 尿中NH4+排泄不良（腎細管性アシドーシス(RTA)の疑い）');
+        if (osmolality.urineOsmGap > 150) {
+            diffs.push('⚡ 尿浸透圧ギャップ(U-OG)高値 (>150): 尿中NH4+排泄不良（腎細管性アシドーシス(RTA)の疑い）');
         } else if (osmolality.urineOsmGap < 0) {
             diffs.push('⚡ 尿浸透圧ギャップ(U-OG)低値 (<0): 尿中NH4+排泄良好（下痢等の腎外喪失の存在）');
         }
@@ -730,7 +828,7 @@ function evaluateOsmolality(input: BloodGasInput): OsmolalityResult {
         if (serumEvaluated && serumOsmGap! > 10) warnings.push('血清OG開大');
         if (urineAgEvaluated && urineAg! < 0) warnings.push('U-AG負');
         else if (urineAgEvaluated && urineAg! > 0) warnings.push('U-AG正');
-        if (urineEvaluated && urineOsmGap! > 100) warnings.push('尿OG高値');
+        if (urineEvaluated && urineOsmGap! > 150) warnings.push('尿OG高値');
 
         if (warnings.length > 0) {
             label = warnings.join(' / ');
@@ -771,7 +869,7 @@ export function evaluateBloodGas(input: BloodGasInput): BloodGasResult {
 
     corrected.be = beParam;
 
-    const oxygenation = evaluateOxygenation(corrected.pO2, corrected.fio2, corrected.pCO2);
+    const oxygenation = evaluateOxygenation(corrected.pO2, corrected.fio2, corrected.pCO2, corrected.age, corrected.bloodType);
     const step1 = evaluateStep1(corrected.pH);
     const step2 = evaluateStep2(corrected.pH, corrected.pCO2, beParam);
     const step3 = evaluateStep3(step2.primaryDisorder, corrected.pCO2, beParam, corrected.hco3);
