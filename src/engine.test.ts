@@ -42,7 +42,7 @@ describe('evaluateBloodGas - Winter Formula and Compensation', () => {
         // Metabolic Acidosis
         // HCO3 = 10, Expected pCO2 = 1.5 * 10 + 8 = 23 (±2) -> 21 to 25
         const input: BloodGasInput = { bloodType: 'arterial', pH: 7.20, pCO2: 25, hco3: 10 };
-        const result = evaluateBloodGas(input);
+        void evaluateBloodGas(input);
         // Expected PaCO2 = 1.5 * 10 + 8 = 23. Range is 21 to 25.
         // The implementation says: expected = 23. max = 25.
         // In the app, pCO2 > expected.max means inadequate_high. Let's check the exact boundary.

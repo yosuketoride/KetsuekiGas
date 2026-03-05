@@ -4,8 +4,9 @@ import BloodTypeScreen from './components/BloodTypeScreen';
 import EvaluationScreen from './components/EvaluationScreen';
 import PrivacyScreen from './components/PrivacyScreen';
 import TermsScreen from './components/TermsScreen';
-import AdBlock from './components/AdBlock';
+
 import OnboardingScreen from './components/OnboardingScreen';
+import DisclaimerModal, { useDisclaimer } from './components/DisclaimerModal';
 
 type AppScreen = 'onboarding' | 'blood-type' | 'evaluation' | 'privacy' | 'terms';
 
@@ -13,6 +14,7 @@ export default function App() {
     const [screen, setScreen] = useState<AppScreen>('blood-type');
     const [bloodType, setBloodType] = useState<BloodGasInput['bloodType']>('arterial');
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const { showDisclaimer, agree } = useDisclaimer();
 
     // Initial AdSense Script Injection
     useEffect(() => {
@@ -125,19 +127,13 @@ export default function App() {
                     <OnboardingScreen onComplete={handleOnboardingComplete} />
                 )}
                 {screen === 'blood-type' && (
-                    <>
-                        <BloodTypeScreen onSelect={handleSelectBloodType} />
-                        <AdBlock slot="home-bottom" />
-                    </>
+                    <BloodTypeScreen onSelect={handleSelectBloodType} />
                 )}
                 {screen === 'evaluation' && (
-                    <>
-                        <EvaluationScreen
-                            bloodType={bloodType}
-                            onResetAll={handleReset}
-                        />
-                        <AdBlock slot="eval-bottom" />
-                    </>
+                    <EvaluationScreen
+                        bloodType={bloodType}
+                        onResetAll={handleReset}
+                    />
                 )}
                 {screen === 'privacy' && (
                     <PrivacyScreen onBack={handleReset} />
@@ -146,6 +142,8 @@ export default function App() {
                     <TermsScreen onBack={handleReset} />
                 )}
             </main>
+
+            {showDisclaimer && <DisclaimerModal onAgree={agree} />}
 
             <footer style={{ padding: '20px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 <a href="/terms" onClick={(e) => { e.preventDefault(); navigateTo('/terms', 'terms'); }} style={{ color: 'inherit', margin: '0 10px', textDecoration: 'underline' }}>利用規約</a>
