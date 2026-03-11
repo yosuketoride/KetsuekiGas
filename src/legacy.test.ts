@@ -8,8 +8,18 @@ import path from 'path';
 const comprehensivePath = path.resolve(__dirname, '../Text/test_comprehensive.json');
 const comprehensiveData = JSON.parse(fs.readFileSync(comprehensivePath, 'utf-8'));
 
+// Load newly sourced Oxford cases
+const oxfordPath = path.resolve(__dirname, '../Text/test_oxford.json');
+const oxfordData = JSON.parse(fs.readFileSync(oxfordPath, 'utf-8'));
+
+// Load synthetic extremely complex cases
+const syntheticPath = path.resolve(__dirname, '../Text/test_synthetic.json');
+const syntheticData = JSON.parse(fs.readFileSync(syntheticPath, 'utf-8'));
+
+const allData = [...comprehensiveData, ...oxfordData, ...syntheticData];
+
 describe('evaluateBloodGas - JSON Comprehensive Suite', () => {
-    comprehensiveData.forEach((testCase: any, index: number) => {
+    allData.forEach((testCase: any, index: number) => {
         it(`TestCase ${index + 1}: ${testCase._comment}`, () => {
             const data = testCase.q1_data;
             const input: BloodGasInput = {
@@ -36,6 +46,7 @@ describe('evaluateBloodGas - JSON Comprehensive Suite', () => {
 
             const result = evaluateBloodGas(input);
             const explanationsStr = [
+                result.oxygenation?.label,
                 result.step1?.label,
                 result.step2?.label,
                 result.step3?.label,

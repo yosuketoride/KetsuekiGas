@@ -4,11 +4,12 @@ import BloodTypeScreen from './components/BloodTypeScreen';
 import EvaluationScreen from './components/EvaluationScreen';
 import PrivacyScreen from './components/PrivacyScreen';
 import TermsScreen from './components/TermsScreen';
+import ReferenceScreen from './components/ReferenceScreen';
 
 import OnboardingScreen from './components/OnboardingScreen';
 import DisclaimerModal, { useDisclaimer } from './components/DisclaimerModal';
 
-type AppScreen = 'onboarding' | 'blood-type' | 'evaluation' | 'privacy' | 'terms';
+type AppScreen = 'onboarding' | 'blood-type' | 'evaluation' | 'privacy' | 'terms' | 'reference';
 
 export default function App() {
     const [screen, setScreen] = useState<AppScreen>('blood-type');
@@ -48,6 +49,8 @@ export default function App() {
                 setScreen('privacy');
             } else if (path === '/terms') {
                 setScreen('terms');
+            } else if (path === '/reference') {
+                setScreen('reference');
             } else if (!hasSeenOnboarding) {
                 setScreen('onboarding');
             } else {
@@ -111,7 +114,7 @@ export default function App() {
                         {isDarkMode ? '☀️' : '🌙'}
                     </button>
 
-                    {(screen === 'evaluation' || screen === 'privacy' || screen === 'terms') && (
+                    {(screen === 'evaluation' || screen === 'privacy' || screen === 'terms' || screen === 'reference') && (
                         <button
                             className="header-back-btn"
                             onClick={handleReset}
@@ -141,6 +144,9 @@ export default function App() {
                 {screen === 'terms' && (
                     <TermsScreen onBack={handleReset} />
                 )}
+                {screen === 'reference' && (
+                    <ReferenceScreen onBack={handleReset} />
+                )}
             </main>
 
             {showDisclaimer && <DisclaimerModal onAgree={agree} />}
@@ -149,6 +155,8 @@ export default function App() {
                 <a href="/terms" onClick={(e) => { e.preventDefault(); navigateTo('/terms', 'terms'); }} style={{ color: 'inherit', margin: '0 10px', textDecoration: 'underline' }}>利用規約</a>
                 |
                 <a href="/privacy" onClick={(e) => { e.preventDefault(); navigateTo('/privacy', 'privacy'); }} style={{ color: 'inherit', margin: '0 10px', textDecoration: 'underline' }}>プライバシーポリシー</a>
+                |
+                <a href="/reference" onClick={(e) => { e.preventDefault(); navigateTo('/reference', 'reference'); }} style={{ color: 'inherit', margin: '0 10px', textDecoration: 'underline' }}>References (参考文献)</a>
             </footer>
         </div>
     );

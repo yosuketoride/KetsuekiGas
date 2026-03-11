@@ -464,13 +464,24 @@ export default function EvaluationScreen({ bloodType, onResetAll }: Props) {
                     )}
 
                     <DifferentialWizard result={result} />
+                    
+                    {/* Clinical Disclaimer & Citations */}
+                    <div style={{ marginTop: '24px', padding: '16px', background: 'var(--bg-card)', border: '1px solid var(--color-acidemia-border)', borderLeft: '4px solid #ef4444', borderRadius: '8px' }}>
+                        <p style={{ margin: '0 0 8px', color: '#ef4444', fontWeight: 'bold', fontSize: '0.95rem' }}>⚠️ Not for Clinical Use (臨床判断に使用しないでください)</p>
+                        <p style={{ margin: '0 0 12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            本アプリは教育および学習の補助ツールです。提示される評価や鑑別はアルゴリズムに基づく参考情報の１つであり、実際の臨床診断や治療方針等の決定には一切使用しないでください。
+                        </p>
+                        <a href="/reference" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/reference'); window.dispatchEvent(new Event('popstate')); }} style={{ fontSize: '0.85rem', color: '#3b82f6', textDecoration: 'none', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span>📚 医学的根拠・引用文献 (References & Citations) を確認する</span>
+                            <span style={{ fontSize: '1.1em' }}>→</span>
+                        </a>
+                    </div>
                 </div>
             ) : (
                 <div className="waiting-for-input">
                     必須項目 (pH, PaCO₂, HCO₃⁻) を入力すると、ここに評価結果が自動で表示されます。
                 </div>
-            )
-            }
+            )}
 
             <button className="reset-btn" onClick={onResetAll}>
                 血種選択からやり直す

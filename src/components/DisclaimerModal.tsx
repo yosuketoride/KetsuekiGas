@@ -25,6 +25,8 @@ interface DisclaimerModalProps {
 }
 
 export default function DisclaimerModal({ onAgree }: DisclaimerModalProps) {
+    const [checked, setChecked] = useState(false);
+
     return (
         <div style={{
             position: 'fixed', inset: 0, zIndex: 9999,
@@ -59,29 +61,44 @@ export default function DisclaimerModal({ onAgree }: DisclaimerModalProps) {
                     color: '#e8eaf6',
                 }}>
                     <p style={{ margin: '0 0 0.75rem' }}>
-                        本アプリは<strong>医療従事者向けの参考ツール</strong>です。血液ガス分析の学習・補助を目的として設計されています。
+                        本アプリは<strong>医療従事者向けの教育・学習ツール</strong>です。血液ガス分析の学習・補助を目的として設計されています。
                     </p>
                     <p style={{ margin: '0 0 0.75rem' }}>
-                        ⚠️ 診断・治療方針の最終決定は、必ず担当医師が臨床情報を総合して判断してください。本アプリの結果のみに基づく臨床判断は行わないでください。
+                        ⚠️ <strong>Not for Clinical Use (臨床判断に使用不可)</strong>: 本アプリが提示する内容は参考情報であり、実際の診療現場における診断・治療方針の最終決定には使用しないでください。必ず担当医師が臨床情報を総合して判断してください。
                     </p>
                     <p style={{ margin: 0 }}>
                         本アプリの使用により生じたいかなる損害についても、開発者は責任を負いません。
                     </p>
                 </div>
 
+                <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <input 
+                        type="checkbox" 
+                        id="disclaimer-check" 
+                        checked={checked}
+                        onChange={(e) => setChecked(e.target.checked)}
+                        style={{ marginTop: '4px', cursor: 'pointer', width: '18px', height: '18px' }}
+                    />
+                    <label htmlFor="disclaimer-check" style={{ fontSize: '0.85rem', cursor: 'pointer', lineHeight: 1.5 }}>
+                        本アプリが臨床診断用ではなく教育ツールであることを理解し、診断結果の最終判断は医師が総合的に行うことに同意します。
+                    </label>
+                </div>
+
                 <button
+                    disabled={!checked}
                     onClick={onAgree}
                     style={{
                         width: '100%',
                         padding: '0.875rem',
-                        background: 'linear-gradient(135deg, #1565c0, #1976d2)',
-                        color: '#fff',
+                        background: checked ? 'linear-gradient(135deg, #1565c0, #1976d2)' : '#374151',
+                        color: checked ? '#fff' : '#9ca3af',
                         border: 'none',
                         borderRadius: '10px',
                         fontSize: '1rem',
                         fontWeight: 700,
-                        cursor: 'pointer',
+                        cursor: checked ? 'pointer' : 'not-allowed',
                         letterSpacing: '0.02em',
+                        transition: 'all 0.2s',
                     }}
                 >
                     同意して始める

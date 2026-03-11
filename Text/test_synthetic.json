@@ -1,0 +1,172 @@
+[
+    {
+        "_comment": "Synthetic Q1: Severe HAGMA + Minor NAGMA + Respiratory Alkalosis (Aspirin + Diarrhea)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "pH": 7.35,
+            "PO2": 95,
+            "PCO2": 20,
+            "HCO3": 10,
+            "Na": 140,
+            "Cl": 112
+        },
+        "q2_interpretation": [
+            "代償あり(PaCO₂ < 35)",
+            "AG開大性代謝性アシドーシス",
+            "呼吸性アルカローシスの合併"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q2: Pure NAGMA from GI loss but completely uncompensated (Respiratory failure)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "pH": 7.15,
+            "PO2": 70,
+            "PCO2": 40,
+            "HCO3": 13,
+            "Na": 138,
+            "Cl": 118
+        },
+        "q2_interpretation": [
+            "代謝性アシドーシス",
+            "AG正常型代謝性アシドーシス",
+            "呼吸性アシドーシス合併",
+            "軽度低酸素"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q3: Massive Delta Ratio > 2.0 (DKA + Severe vomiting)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "pH": 7.40,
+            "PO2": 95,
+            "PCO2": 40,
+            "HCO3": 24,
+            "Na": 140,
+            "Cl": 85,
+            "Glu": 500
+        },
+        "q2_interpretation": [
+            "代謝性アルカローシスが合併しています",
+            "AG開大性代謝性アシドーシス"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q4: Winter's formula exactly at the upper bound (1.5*10+8=23, upper max=25. pCO2=25 -> adequate)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "pH": 7.22,
+            "PO2": 90,
+            "PCO2": 25,
+            "HCO3": 10,
+            "Na": 140,
+            "Cl": 105
+        },
+        "q2_interpretation": [
+            "代償あり",
+            "混合障害なし"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q5: Winter's formula just above upper bound (pCO2=26 -> inadequate_high = respiratory acidosis)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "pH": 7.20,
+            "PO2": 90,
+            "PCO2": 26,
+            "HCO3": 10,
+            "Na": 140,
+            "Cl": 105
+        },
+        "q2_interpretation": [
+            "呼吸性アシドーシス合併"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q6: Very elderly patient with PaO2 65 (Age 95 expected 78, bound 68... 65 is mild hypoxemia, not just age)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "age": 95,
+            "pH": 7.4,
+            "PO2": 65,
+            "PCO2": 40,
+            "HCO3": 24,
+            "Na": 140,
+            "Cl": 104
+        },
+        "q2_interpretation": [
+            "軽度低酸素"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q7: Very elderly patient with PaO2 70 (Age 95 expected 78, bound 68... 70 is age-related normal)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "age": 95,
+            "pH": 7.4,
+            "PO2": 70,
+            "PCO2": 40,
+            "HCO3": 24,
+            "Na": 140,
+            "Cl": 104
+        },
+        "q2_interpretation": [
+            "軽度低酸素"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q8: Triple Acid-Base Disorder (Met alkalosis + Respiratory Alkalosis + HAGMA)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "pH": 7.55,
+            "PO2": 99,
+            "PCO2": 25,
+            "HCO3": 21,
+            "Na": 140,
+            "Cl": 94,
+            "Alb": 4.0
+        },
+        "q2_interpretation": [
+            "代謝性アルカローシス",
+            "AG開大性代謝性アシドーシス"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q9: High U-OG detecting RTA",
+        "q1_data": {
+            "bloodType": "arterial",
+            "pH": 7.30,
+            "PO2": 95,
+            "PCO2": 35,
+            "HCO3": 17,
+            "Na": 140,
+            "Cl": 110,
+            "UNa": 60,
+            "UK": 30,
+            "UOsm": 450,
+            "UUn": 300,
+            "UGlu": 0
+        },
+        "q2_interpretation": [
+            "AG正常型代謝性アシドーシス",
+            "尿浸透圧ギャップ(U-OG)高値 (>150)"
+        ]
+    },
+    {
+        "_comment": "Synthetic Q10: Isolated extreme hyperlactatemia with totally normal pH/HCO3/pCO2 (pure theoretical/lab error check)",
+        "q1_data": {
+            "bloodType": "arterial",
+            "pH": 7.40,
+            "PO2": 95,
+            "PCO2": 40,
+            "HCO3": 24,
+            "Na": 140,
+            "Cl": 104,
+            "Lac": 15.0
+        },
+        "q2_interpretation": [
+            "酸塩基平衡正常",
+            "乳酸アシドーシス"
+        ]
+    }
+]

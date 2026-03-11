@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body,
+    html {
+      width: 1242px;
+      height: 2688px;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background: #E8F4FD;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .wrapper {
+      width: 1242px;
+      height: 2688px;
+      background: linear-gradient(145deg, #e3f2fd 0%, #bbdefb 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .text-area {
+      position: absolute;
+      z-index: 10;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #fff;
+      padding: 16px 40px;
+      border-radius: 60px;
+      font-size: 34px;
+      font-weight: 700;
+      color: #1565C0;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 30px rgba(0, 100, 200, 0.1);
+    }
+
+    .phone {
+      position: absolute;
+      width: 950px;
+      height: 1950px;
+      background: #111;
+      border-radius: 120px;
+      padding: 30px;
+      box-shadow: -30px 50px 80px rgba(0, 0, 0, 0.25), inset 0 0 0 4px #444;
+      z-index: 5;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 90px;
+      overflow: hidden;
+      background: #f8fafc;
+      position: relative;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+
+    .dynamic-island {
+      position: absolute;
+      top: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 250px;
+      height: 70px;
+      background: #000;
+      border-radius: 40px;
+      z-index: 20;
+    }
+
+    .s1 .text-area {
+      top: 12%;
+      left: 100px;
+      width: 1000px;
+    }
+
+    .s1 .headline {
+      font-size: 96px;
+      font-weight: 900;
+      color: #0d2136;
+      line-height: 1.25;
+      letter-spacing: -2px;
+    }
+
+    .s1 .subtitle {
+      font-size: 44px;
+      font-weight: 600;
+      color: #4a5c6e;
+      margin-top: 40px;
+    }
+
+    /* Fix the slightly uncentered screenshot inside screen 1's phone */
+    .s1 .screen img {
+      object-position: 0% top;
+    }
+
+    /* Screen 2 image position reset to top center */
+    .s2 .screen img {
+      object-position: 0% top;
+    }
+
+    /* Global spanning phone configuration. 
+       We lowered it (-600px) and moved it right (+600px) so it doesn't overlap s2's text */
+    .s1 .phone {
+      left: 650px;
+      bottom: -720px;
+      transform: rotate(18deg);
+      height: 2250px;
+    }
+
+    .s2 .text-area {
+      top: 12%;
+      left: 100px;
+      width: 1000px;
+    }
+
+    .s2 .headline {
+      font-size: 82px;
+      font-weight: 900;
+      color: #0d2136;
+      line-height: 1.2;
+      letter-spacing: -2px;
+      border-bottom: 6px solid #1565C0;
+      display: inline-block;
+      padding-bottom: 15px;
+    }
+
+    .s2 ul {
+      font-size: 38px;
+      font-weight: 700;
+      color: #2C3E50;
+      margin-top: 50px;
+      line-height: 1.8;
+      list-style: none;
+      padding: 0;
+    }
+
+    .s2 li {
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .s2 li span {
+      color: #1565C0;
+      margin-right: 25px;
+      font-size: 42px;
+      line-height: 1.5;
+    }
+
+    /* Screen 2: mathematically continue the phone from Screen 1 by subtracting 1242px.
+       650 - 1242 = -592px. This perfectly aligns the phone edge-to-edge. */
+    .s2 .phone {
+      left: -592px;
+      bottom: -720px;
+      transform: rotate(18deg);
+      height: 2250px;
+    }
+
+    /* Wide canvas layout for perfectly aligned screens 1 and 2 */
+    .s1_2 {
+      width: 2484px !important;
+      background: linear-gradient(145deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+
+    /* Ensure the phone spans beautifully across the split */
+    .s1_2 .phone {
+      left: 650px;
+      /* Same horizontal alignment as original s1 */
+      bottom: -720px;
+      /* Same vertical alignment as original s1 */
+      transform: rotate(18deg);
+      height: 2250px;
+    }
+
+    .s1_2 .screen img {
+      object-position: 0% top;
+    }
+
+    /* Target the first headline within the wide layout */
+    .s1_2 .left-headline {
+      font-size: 96px;
+      font-weight: 900;
+      color: #0d2136;
+      line-height: 1.25;
+      letter-spacing: -2px;
+    }
+
+    .s1_2 .left-subtitle {
+      font-size: 44px;
+      font-weight: 600;
+      color: #4a5c6e;
+      margin-top: 40px;
+    }
+
+    /* Target the second headline within the wide layout */
+    .s1_2 .right-headline {
+      font-size: 82px;
+      font-weight: 900;
+      color: #0d2136;
+      line-height: 1.2;
+      letter-spacing: -2px;
+      border-bottom: 6px solid #1565C0;
+      display: inline-block;
+      padding-bottom: 15px;
+    }
+
+    .s1_2 ul {
+      font-size: 38px;
+      font-weight: 700;
+      color: #2C3E50;
+      margin-top: 50px;
+      line-height: 1.8;
+      list-style: none;
+      padding: 0;
+    }
+
+    .s1_2 li {
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .s1_2 li span {
+      color: #1565C0;
+      margin-right: 25px;
+      font-size: 42px;
+      line-height: 1.5;
+    }
+
+    .s3 .wrapper {
+      background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+
+    .s3 .text-area {
+      top: 10%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+    }
+
+    .s3 .headline {
+      font-size: 90px;
+      font-weight: 900;
+      color: #0d2136;
+      line-height: 1.25;
+      letter-spacing: -2px;
+    }
+
+    .s3 .subtitle {
+      font-size: 44px;
+      font-weight: 600;
+      color: #4a5c6e;
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+    }
+
+    .s3 .phone {
+      left: 146px;
+      bottom: -120px;
+      transform: none;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3);
+      height: 1600px;
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    const s = new URLSearchParams(window.location.search).get('s') || '1';
+    let html = '';
+    if (s === '1_2') {
+      html = `
+      <div class="wrapper s1_2" style="width: 2484px;">
+        <div class="text-area" style="top: 12%; left: 100px; width: 1000px;">
+          <div class="badge">血液ガスStep評価ガイド</div>
+          <div class="left-headline">値を入れるだけで<br>自動で鑑別</div>
+          <div class="left-subtitle">入力したら即座に診断が出る</div>
+        </div>
+        <div class="text-area" style="top: 12%; left: 1342px; width: 1000px;">
+          <div class="badge">多彩な機能</div>
+          <div class="right-headline">VBG(静脈血)補正対応</div>
+          <ul>
+            <li><span>✓</span>Delta Ratioで隠れた混合障害を検出</li>
+            <li><span>✓</span>Step形式で思考プロセスを見える化</li>
+            <li><span>✓</span>年齢補正PaO₂で高齢者の酸素評価</li>
+            <li><span>✓</span>Winter's式で呼吸代償チェック</li>
+            <li><span>✓</span>AG開大性の詳細鑑別</li>
+          </ul>
+        </div>
+        <div class="phone"><div class="dynamic-island"></div><div class="screen"><img src="/promo/scr1.png"></div></div>
+      </div>
+      `;
+    } else if (s === '1') {
+      html = `
+      <div class="wrapper s1">
+        <div class="text-area">
+          <div class="badge">血液ガスStep評価ガイド</div>
+          <div class="headline">値を入れるだけで<br>自動で鑑別</div>
+          <div class="subtitle">入力したら即座に診断が出る</div>
+        </div>
+        <div class="phone"><div class="dynamic-island"></div><div class="screen"><img src="/promo/scr1.png"></div></div>
+      </div>
+    `;
+    } else if (s === '2') {
+      html = `
+      <div class="wrapper s2">
+        <div class="text-area">
+          <div class="badge">多彩な機能</div>
+          <div class="headline s2-headline">VBG(静脈血)補正対応</div>
+          <ul>
+            <li><span>✓</span>Delta Ratioで隠れた混合障害を検出</li>
+            <li><span>✓</span>Step形式で思考プロセスを見える化</li>
+            <li><span>✓</span>年齢補正PaO₂で高齢者の酸素評価</li>
+            <li><span>✓</span>Winter's式で呼吸代償チェック</li>
+            <li><span>✓</span>AG開大性の詳細鑑別</li>
+          </ul>
+        </div>
+        <div class="phone"><div class="dynamic-island"></div><div class="screen"><img src="/promo/scr2.png"></div></div>
+      </div>
+    `;
+    } else if (s === '3') {
+      html = `
+      <div class="wrapper s3">
+        <div class="text-area">
+          <div class="headline">ノモグラムで障害の種類を<br>視覚的に確認</div>
+          <div class="subtitle"><span>酸塩基平衡ノモグラム表示</span><span>|</span><span>低アルブミン補正AG対応</span></div>
+        </div>
+        <div class="phone"><div class="dynamic-island"></div><div class="screen"><img src="/promo/scr3.png"></div></div>
+      </div>
+    `;
+    }
+    document.body.innerHTML = html;
+  </script>
+</body>
+
+</html>

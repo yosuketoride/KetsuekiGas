@@ -11,7 +11,11 @@ platform :ios do
       build_number: build_num,
       xcodeproj: "App.xcodeproj"
     )
-    build_app(project: "App.xcodeproj", scheme: "App")
+    build_app(
+      project: "App.xcodeproj",
+      scheme: "App",
+      export_options: "ExportOptions.plist"
+    )
     upload_to_testflight
   end
 
