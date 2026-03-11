@@ -92,7 +92,7 @@ export default function App() {
                     <div className="app-title">血液ガスStep評価</div>
                     <div className="app-subtitle">
                         動脈血・静脈血 対応
-                        <span style={{ marginLeft: '8px', fontSize: '0.8em', backgroundColor: '#3b82f6', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>v2.6.4</span>
+                        <span style={{ marginLeft: '8px', fontSize: '0.8em', backgroundColor: '#3b82f6', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>v2.6.5</span>
                     </div>
                 </div>
 
